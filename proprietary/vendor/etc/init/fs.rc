@@ -3,16 +3,26 @@ on property:sys.boot_completed=1
    swapon_all /vendor/etc/fstab.amlogic
 
 on fs
-    mount_all /vendor/etc/fstab.amlogic
+    mount_all /vendor/etc/fstab.amlogic --early
 
     restorecon_recursive /mnt/vendor/param
 
     verity_update_state
 
+on late-fs
+    # Wait for keymaster
+    exec_start wait_for_keymaster
+
+    # Mount RW partitions which need run fsck
+    mount_all /vendor/etc/fstab.amlogic --late
+
 on post-fs-data
     mkdir /data/vendor/wifi 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     # we will remap this as /storage/sdcard0 with the sdcard fuse tool
+    mkdir /data/vendor/cas 0700 root root
+    #for wvcas
+    mkdir /data/vendor/mediacas 0770 media mediadrm
 
     #for irdeto
     mkdir /data/vendor/irdeto 0770 system system
